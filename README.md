@@ -27,4 +27,4 @@ Plataforma para gestão e organização de planos de atividades, com funcionalid
    npm run dev
 
 
-Desenvolvido por Afonso Domingos.( https://www.linkedin.com/in/afonso-domingos-6b59361a5/ )
+Desenvolvido por Afonso Domingos. https://www.linkedin.com/in/afonso-domingos-6b59361a5/ 
