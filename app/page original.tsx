@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
 interface Colaborador {
-  _id: string // Changed from 'id' to '_id' to match typical MongoDB IDs
+  id: string
   nome: string
   email: string
   telefone: string
@@ -33,7 +33,7 @@ interface Colaborador {
 }
 
 interface Atividade {
-  _id: string // Changed from 'id' to '_id' to match typical MongoDB IDs
+  id: string
   titulo: string
   descricao: string
   colaboradorId: string
@@ -42,8 +42,6 @@ interface Atividade {
   duracao: number
   prazo: string
 }
-
-const API_BASE_URL = "https://apiplanact.onrender.com/api"
 
 export default function PlataformaAtividades() {
   // Estado da aplicação
@@ -64,9 +62,6 @@ export default function PlataformaAtividades() {
   // Dados
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([])
   const [atividades, setAtividades] = useState<Atividade[]>([])
-  const [loading, setLoading] = useState(true); // New state for loading indicator
-  const [error, setError] = useState<string | null>(null); // New state for error handling
-
 
   // Formulários
   const [colaboradorForm, setColaboradorForm] = useState({
@@ -87,7 +82,7 @@ export default function PlataformaAtividades() {
     prazo: "",
   })
 
-  // Computed values (These remain largely the same, but will now operate on fetched data)
+  // Computed values
   const atividadesFiltradas = useMemo(() => {
     return atividades.filter((atividade) => {
       const colaboradorMatch = !filtroColaborador || atividade.colaboradorId === filtroColaborador
@@ -136,50 +131,7 @@ export default function PlataformaAtividades() {
     return distribution
   }, [atividades, totalAtividades])
 
-  // --- Data Fetching Functions ---
-  const fetchColaboradores = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API_BASE_URL}/colaboradores`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setColaboradores(data);
-    } catch (e: any) {
-      setError(`Failed to fetch collaborators: ${e.message}`);
-      console.error("Failed to fetch collaborators:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAtividades = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API_BASE_URL}/atividades`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setAtividades(data);
-    } catch (e: any) {
-      setError(`Failed to fetch activities: ${e.message}`);
-      console.error("Failed to fetch activities:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // --- useEffect to fetch data on component mount ---
-  useEffect(() => {
-    fetchColaboradores();
-    fetchAtividades();
-  }, []); // Empty dependency array means this runs once on mount
-
-  // Funções de exportação (Remain the same, as they operate on the current state data)
+  // Funções de exportação
   const exportColaboradoresPDF = async () => {
     const { jsPDF } = await import("jspdf")
     await import("jspdf-autotable")
@@ -201,7 +153,7 @@ export default function PlataformaAtividades() {
       colaborador.departamento,
       colaborador.email,
       colaborador.telefone,
-      getAtividadesCount(colaborador._id).toString(), // Use _id here
+      getAtividadesCount(colaborador.id).toString(),
     ])
     ;(doc as any).autoTable({
       head: [["Nome", "Cargo", "Departamento", "Email", "Telefone", "Atividades"]],
@@ -246,7 +198,7 @@ export default function PlataformaAtividades() {
         colaborador.departamento,
         colaborador.email,
         colaborador.telefone,
-        getAtividadesCount(colaborador._id), // Use _id here
+        getAtividadesCount(colaborador.id),
       ]),
     ]
 
@@ -404,7 +356,7 @@ export default function PlataformaAtividades() {
     doc.text("Produtividade por Colaborador", 20, 140)
 
     const produtividade = colaboradores.map((colaborador) => {
-      const atividadesColaborador = atividades.filter((a) => a.colaboradorId === colaborador._id) // Use _id here
+      const atividadesColaborador = atividades.filter((a) => a.colaboradorId === colaborador.id)
       const concluidas = atividadesColaborador.filter((a) => a.status === "concluida").length
       const total = atividadesColaborador.length
       const percentual = total > 0 ? ((concluidas / total) * 100).toFixed(1) : "0"
@@ -454,76 +406,27 @@ export default function PlataformaAtividades() {
     setShowExportMenuAtividades(false)
   }
 
-  // --- Modified Methods for Collaborators to Interact with API ---
-  const saveColaborador = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      let response;
-      if (editingColaborador) {
-        // Update existing collaborator
-        response = await fetch(`${API_BASE_URL}/colaboradores/${editingColaborador._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(colaboradorForm),
-        });
-      } else {
-        // Create new collaborator
-        response = await fetch(`${API_BASE_URL}/colaboradores`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(colaboradorForm),
-        });
+  // Métodos para colaboradores
+  const saveColaborador = () => {
+    if (editingColaborador) {
+      setColaboradores((prev) =>
+        prev.map((c) => (c.id === editingColaborador.id ? { ...colaboradorForm, id: editingColaborador.id } : c)),
+      )
+    } else {
+      const novoColaborador: Colaborador = {
+        ...colaboradorForm,
+        id: Date.now().toString(),
       }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Re-fetch data to ensure UI is in sync with backend
-      await fetchColaboradores();
-      closeColaboradorForm();
-    } catch (e: any) {
-      setError(`Failed to save collaborator: ${e.message}`);
-      console.error("Failed to save collaborator:", e);
-    } finally {
-      setLoading(false);
+      setColaboradores((prev) => [...prev, novoColaborador])
     }
+
+    closeColaboradorForm()
   }
 
   const editColaborador = (colaborador: Colaborador) => {
     setEditingColaborador(colaborador)
     setColaboradorForm({ ...colaborador })
     setShowColaboradorForm(true)
-  }
-
-  const deleteColaborador = async (id: string) => {
-    if (confirm("Tem certeza que deseja excluir este colaborador? Todas as atividades associadas a ele podem ficar sem colaborador.")) {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`${API_BASE_URL}/colaboradores/${id}`, {
-          method: 'DELETE',
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        // Re-fetch data to ensure UI is in sync with backend
-        await fetchColaboradores();
-        await fetchAtividades(); // Also re-fetch activities as they might be affected
-      } catch (e: any) {
-        setError(`Failed to delete collaborator: ${e.message}`);
-        console.error("Failed to delete collaborator:", e);
-      } finally {
-        setLoading(false);
-      }
-    }
   }
 
   const closeColaboradorForm = () => {
@@ -538,45 +441,21 @@ export default function PlataformaAtividades() {
     })
   }
 
-  // --- Modified Methods for Activities to Interact with API ---
-  const saveAtividade = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      let response;
-      if (editingAtividade) {
-        // Update existing activity
-        response = await fetch(`${API_BASE_URL}/atividades/${editingAtividade._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(atividadeForm),
-        });
-      } else {
-        // Create new activity
-        response = await fetch(`${API_BASE_URL}/atividades`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(atividadeForm),
-        });
+  // Métodos para atividades
+  const saveAtividade = () => {
+    if (editingAtividade) {
+      setAtividades((prev) =>
+        prev.map((a) => (a.id === editingAtividade.id ? { ...atividadeForm, id: editingAtividade.id } : a)),
+      )
+    } else {
+      const novaAtividade: Atividade = {
+        ...atividadeForm,
+        id: Date.now().toString(),
       }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Re-fetch data
-      await fetchAtividades();
-      closeAtividadeForm();
-    } catch (e: any) {
-      setError(`Failed to save activity: ${e.message}`);
-      console.error("Failed to save activity:", e);
-    } finally {
-      setLoading(false);
+      setAtividades((prev) => [...prev, novaAtividade])
     }
+
+    closeAtividadeForm()
   }
 
   const editAtividade = (atividade: Atividade) => {
@@ -585,27 +464,9 @@ export default function PlataformaAtividades() {
     setShowAtividadeForm(true)
   }
 
-  const deleteAtividade = async (id: string) => {
+  const deleteAtividade = (id: string) => {
     if (confirm("Tem certeza que deseja excluir esta atividade?")) {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`${API_BASE_URL}/atividades/${id}`, {
-          method: 'DELETE',
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        // Re-fetch data
-        await fetchAtividades();
-      } catch (e: any) {
-        setError(`Failed to delete activity: ${e.message}`);
-        console.error("Failed to delete activity:", e);
-      } finally {
-        setLoading(false);
-      }
+      setAtividades((prev) => prev.filter((a) => a.id !== id))
     }
   }
 
@@ -623,10 +484,9 @@ export default function PlataformaAtividades() {
     })
   }
 
-  // Métodos utilitários (These largely remain the same, but now `getColaboradorNome`
-  // will work with the fetched `colaboradores` array and IDs from activities)
+  // Métodos utilitários
   const getColaboradorNome = (id: string) => {
-    const colaborador = colaboradores.find((c) => c._id === id) // Use _id here
+    const colaborador = colaboradores.find((c) => c.id === id)
     return colaborador ? colaborador.nome : "N/A"
   }
 
@@ -688,6 +548,60 @@ export default function PlataformaAtividades() {
     return date.toLocaleDateString("pt-BR")
   }
 
+  // Dados de exemplo
+  const initializeData = () => {
+    if (colaboradores.length === 0) {
+      setColaboradores([
+        {
+          id: "1",
+          nome: "Ana Silva",
+          email: "ana.silva@empresa.com",
+          telefone: "(11) 99999-1111",
+          cargo: "Desenvolvedora Frontend",
+          departamento: "Tecnologia",
+        },
+        {
+          id: "2",
+          nome: "Carlos Santos",
+          email: "carlos.santos@empresa.com",
+          telefone: "(11) 99999-2222",
+          cargo: "Gerente de Projetos",
+          departamento: "Gestão",
+        },
+      ])
+    }
+
+    if (atividades.length === 0) {
+      setAtividades([
+        {
+          id: "1",
+          titulo: "Desenvolver interface de login",
+          descricao: "Criar tela de login responsiva com validação",
+          colaboradorId: "1",
+          status: "em-andamento",
+          prioridade: "alta",
+          duracao: 8,
+          prazo: "2024-12-25",
+        },
+        {
+          id: "2",
+          titulo: "Reunião de planejamento",
+          descricao: "Definir escopo do próximo sprint",
+          colaboradorId: "2",
+          status: "concluida",
+          prioridade: "media",
+          duracao: 2,
+          prazo: "2024-12-20",
+        },
+      ])
+    }
+  }
+
+  // Inicialização
+  useEffect(() => {
+    initializeData()
+  }, [])
+
   // Fechar menus ao clicar fora
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -737,12 +651,6 @@ export default function PlataformaAtividades() {
       </header>
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        {loading && <p className="text-center text-blue-600">Carregando dados...</p>}
-        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-          <strong className="font-bold">Erro:</strong>
-          <span className="block sm:inline"> {error}</span>
-        </div>}
-
         {/* Dashboard Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total Colaboradores */}
@@ -880,7 +788,7 @@ export default function PlataformaAtividades() {
             {/* Lista de Colaboradores */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {colaboradores.map((colaborador) => (
-                <Card key={colaborador._id} className="hover:shadow-md transition-shadow">
+                <Card key={colaborador.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center mb-4">
                       <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -906,21 +814,13 @@ export default function PlataformaAtividades() {
                       </p>
                     </div>
                     <div className="mt-4 flex justify-between items-center">
-                      <span className="text-sm text-gray-500">{getAtividadesCount(colaborador._id)} atividades</span>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => editColaborador(colaborador)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => deleteColaborador(colaborador._id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <span className="text-sm text-gray-500">{getAtividadesCount(colaborador.id)} atividades</span>
+                      <button
+                        onClick={() => editColaborador(colaborador)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </CardContent>
                 </Card>
@@ -929,412 +829,395 @@ export default function PlataformaAtividades() {
           </div>
         )}
 
-       {activeTab === "atividades" && (
-  <div className="space-y-6">
-    <div className="flex justify-between items-center">
-      <h2 className="text-2xl font-bold text-gray-900">Gestão de Atividades</h2>
-      <div className="flex items-center space-x-2">
-        <div className="relative">
-          <Button
-            onClick={() => setShowExportMenuAtividades(!showExportMenuAtividades)}
-            variant="outline"
-            className="flex items-center"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Exportar
-            <ChevronDown className="w-4 h-4 ml-2" />
-          </Button>
-          {showExportMenuAtividades && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
-              <div className="py-1">
-                <button
-                  onClick={exportAtividadesPDF}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+        {/* Atividades Tab */}
+        {activeTab === "atividades" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Gestão de Atividades</h2>
+              <div className="flex items-center space-x-2">
+                <div className="relative">
+                  <Button
+                    onClick={() => setShowExportMenuAtividades(!showExportMenuAtividades)}
+                    variant="outline"
+                    className="flex items-center"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar
+                    <ChevronDown className="w-4 h-4 ml-2" />
+                  </Button>
+                  {showExportMenuAtividades && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
+                      <div className="py-1">
+                        <button
+                          onClick={exportAtividadesPDF}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                        >
+                          <FileText className="w-4 h-4 inline mr-2" />
+                          Relatório PDF
+                        </button>
+                        <button
+                          onClick={exportAtividadesExcel}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                        >
+                          <FileSpreadsheet className="w-4 h-4 inline mr-2" />
+                          Planilha Excel
+                        </button>
+                        <button
+                          onClick={exportRelatorioCompleto}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                        >
+                          <BarChart3 className="w-4 h-4 inline mr-2" />
+                          Relatório Completo
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <Button
+                  onClick={() => setShowAtividadeForm(true)}
+                  className="flex items-center bg-green-600 hover:bg-green-700"
                 >
-                  <FileText className="w-4 h-4 inline mr-2" />
-                  Relatório PDF
-                </button>
-                <button
-                  onClick={exportAtividadesExcel}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                >
-                  <FileSpreadsheet className="w-4 h-4 inline mr-2" />
-                  Planilha Excel
-                </button>
-                <button
-                  onClick={exportRelatorioCompleto}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                >
-                  <BarChart3 className="w-4 h-4 inline mr-2" />
-                  Relatório Completo
-                </button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Atividade
+                </Button>
               </div>
             </div>
-          )}
-        </div>
-        <Button
-          onClick={() => setShowAtividadeForm(true)}
-          className="flex items-center bg-green-600 hover:bg-green-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Atividade
-        </Button>
-      </div>
-    </div>
 
-    {/* Filtros */}
-    <Card>
-      <CardContent className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Colaborador</label>
-            <select
-              value={filtroColaborador}
-              onChange={(e) => setFiltroColaborador(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-            >
-              <option value="">Todos os colaboradores</option>
-              {colaboradores.map((colaborador) => (
-                <option key={colaborador._id} value={colaborador._id}>
-                  {colaborador.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-            <select
-              value={filtroStatus}
-              onChange={(e) => setFiltroStatus(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-            >
-              <option value="">Todos os status</option>
-              <option value="pendente">Pendente</option>
-              <option value="em-andamento">Em Andamento</option>
-              <option value="concluida">Concluída</option>
-              <option value="cancelada">Cancelada</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Prioridade</label>
-            <select
-              value={filtroPrioridade}
-              onChange={(e) => setFiltroPrioridade(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-            >
-              <option value="">Todas as prioridades</option>
-              <option value="baixa">Baixa</option>
-              <option value="media">Média</option>
-              <option value="alta">Alta</option>
-            </select>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-
-    {/* Lista de Atividades em Tabela */}
-    <Card>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atividade</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Colaborador</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prioridade</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duração</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prazo</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {atividadesFiltradas.map((atividade) => (
-              <tr key={atividade._id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
+            {/* Filtros */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <div className="text-sm font-medium text-gray-900">{atividade.titulo}</div>
-                    <div className="text-sm text-gray-500">{atividade.descricao}</div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{getColaboradorNome(atividade.colaboradorId)}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(atividade.status)}`}>
-                    {getStatusLabel(atividade.status)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPrioridadeClass(atividade.prioridade)}`}>
-                    {getPrioridadeLabel(atividade.prioridade)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{atividade.duracao}h</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(atividade.prazo)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button onClick={() => editAtividade(atividade)} className="text-blue-600 hover:text-blue-900 mr-3">
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => deleteAtividade(atividade._id)} className="text-red-600 hover:text-red-900">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  </div>
-)}
-
-
-        {/* Modal para Adicionar/Editar Colaborador */}
-        {showColaboradorForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <Card className="w-full max-w-lg">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold">
-                    {editingColaborador ? "Editar Colaborador" : "Adicionar Novo Colaborador"}
-                  </h2>
-                  <Button variant="ghost" size="icon" onClick={closeColaboradorForm}>
-                    <X className="w-5 h-5" />
-                  </Button>
-                </div>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    saveColaborador()
-                  }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label htmlFor="nome" className="block text-sm font-medium text-gray-700">
-                      Nome
-                    </label>
-                    <input
-                      type="text"
-                      id="nome"
-                      value={colaboradorForm.nome}
-                      onChange={(e) => setColaboradorForm({ ...colaboradorForm, nome: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      value={colaboradorForm.email}
-                      onChange={(e) => setColaboradorForm({ ...colaboradorForm, email: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="telefone" className="block text-sm font-medium text-gray-700">
-                      Telefone
-                    </label>
-                    <input
-                      type="tel"
-                      id="telefone"
-                      value={colaboradorForm.telefone}
-                      onChange={(e) => setColaboradorForm({ ...colaboradorForm, telefone: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="cargo" className="block text-sm font-medium text-gray-700">
-                      Cargo
-                    </label>
-                    <input
-                      type="text"
-                      id="cargo"
-                      value={colaboradorForm.cargo}
-                      onChange={(e) => setColaboradorForm({ ...colaboradorForm, cargo: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="departamento" className="block text-sm font-medium text-gray-700">
-                      Departamento
-                    </label>
-                    <input
-                      type="text"
-                      id="departamento"
-                      value={colaboradorForm.departamento}
-                      onChange={(e) => setColaboradorForm({ ...colaboradorForm, departamento: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                      required
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={closeColaboradorForm}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit">Salvar</Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Modal para Adicionar/Editar Atividade */}
-        {showAtividadeForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <Card className="w-full max-w-lg">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold">
-                    {editingAtividade ? "Editar Atividade" : "Adicionar Nova Atividade"}
-                  </h2>
-                  <Button variant="ghost" size="icon" onClick={closeAtividadeForm}>
-                    <X className="w-5 h-5" />
-                  </Button>
-                </div>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    saveAtividade()
-                  }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label htmlFor="titulo" className="block text-sm font-medium text-gray-700">
-                      Título
-                    </label>
-                    <input
-                      type="text"
-                      id="titulo"
-                      value={atividadeForm.titulo}
-                      onChange={(e) => setAtividadeForm({ ...atividadeForm, titulo: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="descricao" className="block text-sm font-medium text-gray-700">
-                      Descrição
-                    </label>
-                    <textarea
-                      id="descricao"
-                      value={atividadeForm.descricao}
-                      onChange={(e) => setAtividadeForm({ ...atividadeForm, descricao: e.target.value })}
-                      rows={3}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="colaborador" className="block text-sm font-medium text-gray-700">
-                      Colaborador
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Colaborador</label>
                     <select
-                      id="colaborador"
-                      value={atividadeForm.colaboradorId}
-                      onChange={(e) => setAtividadeForm({ ...atividadeForm, colaboradorId: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                      required
+                      value={filtroColaborador}
+                      onChange={(e) => setFiltroColaborador(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
                     >
-                      <option value="">Selecione um colaborador</option>
+                      <option value="">Todos os colaboradores</option>
                       {colaboradores.map((colaborador) => (
-                        <option key={colaborador._id} value={colaborador._id}>
+                        <option key={colaborador.id} value={colaborador.id}>
                           {colaborador.nome}
                         </option>
                       ))}
                     </select>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                        Status
-                      </label>
-                      <select
-                        id="status"
-                        value={atividadeForm.status}
-                        onChange={(e) =>
-                          setAtividadeForm({
-                            ...atividadeForm,
-                            status: e.target.value as "pendente" | "em-andamento" | "concluida" | "cancelada",
-                          })
-                        }
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                      >
-                        <option value="pendente">Pendente</option>
-                        <option value="em-andamento">Em Andamento</option>
-                        <option value="concluida">Concluída</option>
-                        <option value="cancelada">Cancelada</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="prioridade" className="block text-sm font-medium text-gray-700">
-                        Prioridade
-                      </label>
-                      <select
-                        id="prioridade"
-                        value={atividadeForm.prioridade}
-                        onChange={(e) =>
-                          setAtividadeForm({
-                            ...atividadeForm,
-                            prioridade: e.target.value as "baixa" | "media" | "alta",
-                          })
-                        }
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                      >
-                        <option value="baixa">Baixa</option>
-                        <option value="media">Média</option>
-                        <option value="alta">Alta</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select
+                      value={filtroStatus}
+                      onChange={(e) => setFiltroStatus(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    >
+                      <option value="">Todos os status</option>
+                      <option value="pendente">Pendente</option>
+                      <option value="em-andamento">Em Andamento</option>
+                      <option value="concluida">Concluída</option>
+                      <option value="cancelada">Cancelada</option>
+                    </select>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="duracao" className="block text-sm font-medium text-gray-700">
-                        Duração (horas)
-                      </label>
-                      <input
-                        type="number"
-                        id="duracao"
-                        value={atividadeForm.duracao}
-                        onChange={(e) => setAtividadeForm({ ...atividadeForm, duracao: parseInt(e.target.value) || 0 })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                        min="0"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="prazo" className="block text-sm font-medium text-gray-700">
-                        Prazo
-                      </label>
-                      <input
-                        type="date"
-                        id="prazo"
-                        value={atividadeForm.prazo}
-                        onChange={(e) => setAtividadeForm({ ...atividadeForm, prazo: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                        required
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Prioridade</label>
+                    <select
+                      value={filtroPrioridade}
+                      onChange={(e) => setFiltroPrioridade(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    >
+                      <option value="">Todas as prioridades</option>
+                      <option value="baixa">Baixa</option>
+                      <option value="media">Média</option>
+                      <option value="alta">Alta</option>
+                    </select>
                   </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={closeAtividadeForm}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                      Salvar
-                    </Button>
-                  </div>
-                </form>
+                </div>
               </CardContent>
+            </Card>
+
+            {/* Lista de Atividades */}
+            <Card>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Atividade
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Colaborador
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Prioridade
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Duração
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Prazo
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ações
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {atividadesFiltradas.map((atividade) => (
+                      <tr key={atividade.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{atividade.titulo}</div>
+                            <div className="text-sm text-gray-500">{atividade.descricao}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{getColaboradorNome(atividade.colaboradorId)}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(atividade.status)}`}
+                          >
+                            {getStatusLabel(atividade.status)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPrioridadeClass(atividade.prioridade)}`}
+                          >
+                            {getPrioridadeLabel(atividade.prioridade)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{atividade.duracao}h</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatDate(atividade.prazo)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => editAtividade(atividade)}
+                            className="text-blue-600 hover:text-blue-900 mr-3"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => deleteAtividade(atividade.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </Card>
           </div>
         )}
       </main>
+
+      {/* Modal Colaborador */}
+      {showColaboradorForm && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  {editingColaborador ? "Editar Colaborador" : "Novo Colaborador"}
+                </h3>
+                <button onClick={closeColaboradorForm} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  saveColaborador()
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                  <input
+                    value={colaboradorForm.nome}
+                    onChange={(e) => setColaboradorForm((prev) => ({ ...prev, nome: e.target.value }))}
+                    type="text"
+                    required
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    value={colaboradorForm.email}
+                    onChange={(e) => setColaboradorForm((prev) => ({ ...prev, email: e.target.value }))}
+                    type="email"
+                    required
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                  <input
+                    value={colaboradorForm.telefone}
+                    onChange={(e) => setColaboradorForm((prev) => ({ ...prev, telefone: e.target.value }))}
+                    type="tel"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+                  <input
+                    value={colaboradorForm.cargo}
+                    onChange={(e) => setColaboradorForm((prev) => ({ ...prev, cargo: e.target.value }))}
+                    type="text"
+                    required
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Departamento</label>
+                  <input
+                    value={colaboradorForm.departamento}
+                    onChange={(e) => setColaboradorForm((prev) => ({ ...prev, departamento: e.target.value }))}
+                    type="text"
+                    required
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex justify-end space-x-3 pt-4">
+                  <Button type="button" onClick={closeColaboradorForm} variant="outline">
+                    Cancelar
+                  </Button>
+                  <Button type="submit">{editingColaborador ? "Atualizar" : "Salvar"}</Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Atividade */}
+      {showAtividadeForm && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-10 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  {editingAtividade ? "Editar Atividade" : "Nova Atividade"}
+                </h3>
+                <button onClick={closeAtividadeForm} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  saveAtividade()
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                  <input
+                    value={atividadeForm.titulo}
+                    onChange={(e) => setAtividadeForm((prev) => ({ ...prev, titulo: e.target.value }))}
+                    type="text"
+                    required
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                  <textarea
+                    value={atividadeForm.descricao}
+                    onChange={(e) => setAtividadeForm((prev) => ({ ...prev, descricao: e.target.value }))}
+                    rows={3}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Colaborador</label>
+                  <select
+                    value={atividadeForm.colaboradorId}
+                    onChange={(e) => setAtividadeForm((prev) => ({ ...prev, colaboradorId: e.target.value }))}
+                    required
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">Selecione um colaborador</option>
+                    {colaboradores.map((colaborador) => (
+                      <option key={colaborador.id} value={colaborador.id}>
+                        {colaborador.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select
+                      value={atividadeForm.status}
+                      onChange={(e) => setAtividadeForm((prev) => ({ ...prev, status: e.target.value as any }))}
+                      required
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="pendente">Pendente</option>
+                      <option value="em-andamento">Em Andamento</option>
+                      <option value="concluida">Concluída</option>
+                      <option value="cancelada">Cancelada</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
+                    <select
+                      value={atividadeForm.prioridade}
+                      onChange={(e) => setAtividadeForm((prev) => ({ ...prev, prioridade: e.target.value as any }))}
+                      required
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="baixa">Baixa</option>
+                      <option value="media">Média</option>
+                      <option value="alta">Alta</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Duração (horas)</label>
+                    <input
+                      value={atividadeForm.duracao}
+                      onChange={(e) => setAtividadeForm((prev) => ({ ...prev, duracao: Number(e.target.value) }))}
+                      type="number"
+                      min="0.5"
+                      step="0.5"
+                      required
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Prazo</label>
+                    <input
+                      value={atividadeForm.prazo}
+                      onChange={(e) => setAtividadeForm((prev) => ({ ...prev, prazo: e.target.value }))}
+                      type="date"
+                      required
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-3 pt-4">
+                  <Button type="button" onClick={closeAtividadeForm} variant="outline">
+                    Cancelar
+                  </Button>
+                  <Button type="submit" className="bg-green-600 hover:bg-green-700">
+                    {editingAtividade ? "Atualizar" : "Salvar"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
