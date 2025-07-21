@@ -710,7 +710,7 @@ export default function PlataformaAtividades() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Activity className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-xl font-semibold text-gray-900">Plataforma de Atividades</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Plano de Actividades MUV</h1>
             </div>
             <nav className="flex space-x-8">
               <button
