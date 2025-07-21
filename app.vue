@@ -185,6 +185,7 @@
             </div>
           </div>
         </div>
+
       </div>
 
       <!-- Atividades Tab -->
@@ -526,13 +527,20 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 import { 
   Activity, Users, CheckSquare, Plus, User, Mail, Phone, Calendar, 
   Edit2, Trash2, X, Download, ChevronDown, FileText, FileSpreadsheet, 
   BarChart3, AlertTriangle
 } from 'lucide-vue-next'
+
+// Configuração Axios para seu backend
+const api = axios.create({
+  baseURL: 'https://apiplanact.onrender.com/api'
+})
 
 // Estado da aplicação
 const activeTab = ref('colaboradores')
@@ -621,6 +629,7 @@ const statusDistribution = computed(() => {
   return distribution
 })
 
+// Funções de exportação (mantive o seu código, pois exporta dos dados atuais)
 // Funções de exportação
 const exportColaboradoresPDF = async () => {
   const { jsPDF } = await import('jspdf')
@@ -909,20 +918,77 @@ const exportRelatorioCompleto = async () => {
   showExportMenuAtividades.value = false
 }
 
-// Métodos para colaboradores
-const saveColaborador = () => {
-  if (editingColaborador.value) {
-    const index = colaboradores.value.findIndex(c => c.id === editingColaborador.value.id)
-    colaboradores.value[index] = { ...colaboradorForm.value, id: editingColaborador.value.id }
-  } else {
-    const novoColaborador = {
-      ...colaboradorForm.value,
-      id: Date.now().toString()
-    }
-    colaboradores.value.push(novoColaborador)
+
+// Métodos para sincronização com backend
+
+// Colaboradores
+const fetchColaboradores = async () => {
+  try {
+    const res = await api.get('/colaboradores')
+    colaboradores.value = res.data
+  } catch (error) {
+    console.error('Erro ao buscar colaboradores:', error)
   }
-  
-  saveToLocalStorage()
+}
+
+const saveColaboradorBackend = async (colaborador) => {
+  try {
+    if (colaborador.id) {
+      await api.put(`/colaboradores/${colaborador.id}`, colaborador)
+    } else {
+      await api.post('/colaboradores', colaborador)
+    }
+    await fetchColaboradores()
+  } catch (error) {
+    console.error('Erro ao salvar colaborador:', error)
+  }
+}
+
+const deleteColaboradorBackend = async (id) => {
+  try {
+    await api.delete(`/colaboradores/${id}`)
+    await fetchColaboradores()
+  } catch (error) {
+    console.error('Erro ao deletar colaborador:', error)
+  }
+}
+
+// Atividades
+const fetchAtividades = async () => {
+  try {
+    const res = await api.get('/atividades')
+    atividades.value = res.data
+  } catch (error) {
+    console.error('Erro ao buscar atividades:', error)
+  }
+}
+
+const saveAtividadeBackend = async (atividade) => {
+  try {
+    if (atividade.id) {
+      await api.put(`/atividades/${atividade.id}`, atividade)
+    } else {
+      await api.post('/atividades', atividade)
+    }
+    await fetchAtividades()
+  } catch (error) {
+    console.error('Erro ao salvar atividade:', error)
+  }
+}
+
+const deleteAtividadeBackend = async (id) => {
+  try {
+    await api.delete(`/atividades/${id}`)
+    await fetchAtividades()
+  } catch (error) {
+    console.error('Erro ao deletar atividade:', error)
+  }
+}
+
+// Métodos substituindo os locais por chamadas backend
+
+const saveColaborador = async () => {
+  await saveColaboradorBackend(colaboradorForm.value)
   closeColaboradorForm()
 }
 
@@ -944,20 +1010,8 @@ const closeColaboradorForm = () => {
   }
 }
 
-// Métodos para atividades
-const saveAtividade = () => {
-  if (editingAtividade.value) {
-    const index = atividades.value.findIndex(a => a.id === editingAtividade.value.id)
-    atividades.value[index] = { ...atividadeForm.value, id: editingAtividade.value.id }
-  } else {
-    const novaAtividade = {
-      ...atividadeForm.value,
-      id: Date.now().toString()
-    }
-    atividades.value.push(novaAtividade)
-  }
-  
-  saveToLocalStorage()
+const saveAtividade = async () => {
+  await saveAtividadeBackend(atividadeForm.value)
   closeAtividadeForm()
 }
 
@@ -967,10 +1021,9 @@ const editAtividade = (atividade) => {
   showAtividadeForm.value = true
 }
 
-const deleteAtividade = (id) => {
+const deleteAtividade = async (id) => {
   if (confirm('Tem certeza que deseja excluir esta atividade?')) {
-    atividades.value = atividades.value.filter(a => a.id !== id)
-    saveToLocalStorage()
+    await deleteAtividadeBackend(id)
   }
 }
 
@@ -988,7 +1041,8 @@ const closeAtividadeForm = () => {
   }
 }
 
-// Métodos utilitários
+// Métodos utilitários (mantidos do seu código)
+
 const getColaboradorNome = (id) => {
   const colaborador = colaboradores.value.find(c => c.id === id)
   return colaborador ? colaborador.nome : 'N/A'
@@ -1052,108 +1106,10 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString('pt-BR')
 }
 
-// Persistência de dados
-const saveToLocalStorage = () => {
-  localStorage.setItem('colaboradores', JSON.stringify(colaboradores.value))
-  localStorage.setItem('atividades', JSON.stringify(atividades.value))
-}
-
-const loadFromLocalStorage = () => {
-  const savedColaboradores = localStorage.getItem('colaboradores')
-  const savedAtividades = localStorage.getItem('atividades')
-  
-  if (savedColaboradores) {
-    colaboradores.value = JSON.parse(savedColaboradores)
-  }
-  
-  if (savedAtividades) {
-    atividades.value = JSON.parse(savedAtividades)
-  }
-}
-
-// Dados de exemplo
-const initializeData = () => {
-  if (colaboradores.value.length === 0) {
-    colaboradores.value = [
-      {
-        id: '1',
-        nome: 'Ana Silva',
-        email: 'ana.silva@empresa.com',
-        telefone: '(11) 99999-1111',
-        cargo: 'Desenvolvedora Frontend',
-        departamento: 'Tecnologia'
-      },
-      {
-        id: '2',
-        nome: 'Carlos Santos',
-        email: 'carlos.santos@empresa.com',
-        telefone: '(11) 99999-2222',
-        cargo: 'Gerente de Projetos',
-        departamento: 'Gestão'
-      },
-      {
-        id: '3',
-        nome: 'Maria Oliveira',
-        email: 'maria.oliveira@empresa.com',
-        telefone: '(11) 99999-3333',
-        cargo: 'Designer UX/UI',
-        departamento: 'Design'
-      }
-    ]
-  }
-  
-  if (atividades.value.length === 0) {
-    atividades.value = [
-      {
-        id: '1',
-        titulo: 'Desenvolver interface de login',
-        descricao: 'Criar tela de login responsiva com validação',
-        colaboradorId: '1',
-        status: 'em-andamento',
-        prioridade: 'alta',
-        duracao: 8,
-        prazo: '2024-12-25'
-      },
-      {
-        id: '2',
-        titulo: 'Reunião de planejamento',
-        descricao: 'Definir escopo do próximo sprint',
-        colaboradorId: '2',
-        status: 'concluida',
-        prioridade: 'media',
-        duracao: 2,
-        prazo: '2024-12-20'
-      },
-      {
-        id: '3',
-        titulo: 'Criar protótipo da dashboard',
-        descricao: 'Desenvolver wireframes e protótipo interativo',
-        colaboradorId: '3',
-        status: 'pendente',
-        prioridade: 'alta',
-        duracao: 12,
-        prazo: '2024-12-30'
-      },
-      {
-        id: '4',
-        titulo: 'Implementar sistema de notificações',
-        descricao: 'Desenvolver funcionalidade de notificações em tempo real',
-        colaboradorId: '1',
-        status: 'pendente',
-        prioridade: 'media',
-        duracao: 16,
-        prazo: '2024-12-15'
-      }
-    ]
-  }
-  
-  saveToLocalStorage()
-}
-
 // Inicialização
 onMounted(() => {
-  loadFromLocalStorage()
-  initializeData()
+  fetchColaboradores()
+  fetchAtividades()
 
   // Fechar menus ao clicar fora
   document.addEventListener('click', (e) => {
