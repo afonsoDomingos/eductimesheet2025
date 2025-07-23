@@ -707,15 +707,15 @@ export default function PlataformaAtividades() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-center h-auto sm:h-16 gap-2 sm:gap-0">
-            <div className="flex items-center mb-2 sm:mb-0">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
               <Activity className="h-8 w-8 text-blue-600 mr-3" />
               <h1 className="text-xl font-semibold text-gray-900">Plano de Actividades MUV</h1>
             </div>
-            <nav className="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-8 items-center justify-center">
+            <nav className="flex space-x-8">
               <button
                 onClick={() => setActiveTab("colaboradores")}
-                className={`px-3 py-2 rounded-md text-sm font-medium w-full sm:w-auto text-center ${
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
                   activeTab === "colaboradores" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-gray-700"
                 }`}
               >
@@ -724,7 +724,7 @@ export default function PlataformaAtividades() {
               </button>
               <button
                 onClick={() => setActiveTab("atividades")}
-                className={`px-3 py-2 rounded-md text-sm font-medium w-full sm:w-auto text-center ${
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
                   activeTab === "atividades" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-gray-700"
                 }`}
               >
@@ -836,14 +836,14 @@ export default function PlataformaAtividades() {
         {/* Colaboradores Tab */}
         {activeTab === "colaboradores" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <h2 className="text-2xl font-bold text-gray-900 text-center w-full sm:w-auto">Gestão de Colaboradores</h2>
-              <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
-                <div className="relative w-full sm:w-auto">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Gestão de Colaboradores</h2>
+              <div className="flex items-center space-x-2">
+                <div className="relative">
                   <Button
                     onClick={() => setShowExportMenu(!showExportMenu)}
                     variant="outline"
-                    className="flex items-center w-full sm:w-auto justify-center"
+                    className="flex items-center"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Exportar
@@ -870,7 +870,7 @@ export default function PlataformaAtividades() {
                     </div>
                   )}
                 </div>
-                <Button onClick={() => setShowColaboradorForm(true)} className="flex items-center w-full sm:w-auto justify-center">
+                <Button onClick={() => setShowColaboradorForm(true)} className="flex items-center">
                   <Plus className="w-4 h-4 mr-2" />
                   Novo Colaborador
                 </Button>
@@ -931,14 +931,14 @@ export default function PlataformaAtividades() {
 
        {activeTab === "atividades" && (
   <div className="space-y-6">
-    <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-      <h2 className="text-2xl font-bold text-gray-900 text-center w-full sm:w-auto">Gestão de Atividades</h2>
-      <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
-        <div className="relative w-full sm:w-auto">
+    <div className="flex justify-between items-center">
+      <h2 className="text-2xl font-bold text-gray-900">Gestão de Atividades</h2>
+      <div className="flex items-center space-x-2">
+        <div className="relative">
           <Button
             onClick={() => setShowExportMenuAtividades(!showExportMenuAtividades)}
             variant="outline"
-            className="flex items-center w-full sm:w-auto justify-center"
+            className="flex items-center"
           >
             <Download className="w-4 h-4 mr-2" />
             Exportar
@@ -974,7 +974,7 @@ export default function PlataformaAtividades() {
         </div>
         <Button
           onClick={() => setShowAtividadeForm(true)}
-          className="flex items-center w-full sm:w-auto justify-center bg-green-600 hover:bg-green-700"
+          className="flex items-center bg-green-600 hover:bg-green-700"
         >
           <Plus className="w-4 h-4 mr-2" />
           Nova Atividade
@@ -1034,44 +1034,44 @@ export default function PlataformaAtividades() {
 
     {/* Lista de Atividades em Tabela */}
     <Card>
-      <div className="w-full overflow-x-auto">
-        <table className="min-w-[700px] w-full divide-y divide-gray-200">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Atividade</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Colaborador</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Prioridade</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Duração</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Prazo</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ações</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atividade</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Colaborador</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prioridade</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duração</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prazo</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {atividadesFiltradas.map((atividade) => (
               <tr key={atividade._id} className="hover:bg-gray-50">
-                <td className="px-4 py-4 min-w-[120px]">
+                <td className="px-6 py-4">
                   <div>
                     <div className="text-sm font-medium text-gray-900">{atividade.titulo}</div>
                     <div className="text-sm text-gray-500">{atividade.descricao}</div>
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap min-w-[120px]">
+                <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">{getColaboradorNome(atividade.colaboradorId)}</div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap min-w-[100px]">
+                <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(atividade.status)}`}>
                     {getStatusLabel(atividade.status)}
                   </span>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap min-w-[100px]">
+                <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPrioridadeClass(atividade.prioridade)}`}>
                     {getPrioridadeLabel(atividade.prioridade)}
                   </span>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[80px]">{atividade.duracao}h</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 min-w-[100px]">{formatDate(atividade.prazo)}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium min-w-[100px]">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{atividade.duracao}h</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(atividade.prazo)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button onClick={() => editAtividade(atividade)} className="text-blue-600 hover:text-blue-900 mr-3">
                     <Edit2 className="w-4 h-4" />
                   </button>
