@@ -1185,155 +1185,157 @@ export default function PlataformaAtividades() {
           </div>
         )}
 
-        {/* Modal para Adicionar/Editar Atividade */}
-        {showAtividadeForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <Card className="w-full max-w-lg">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold">
-                    {editingAtividade ? "Editar Atividade" : "Adicionar Nova Atividade"}
-                  </h2>
-                  <Button variant="ghost" size="icon" onClick={closeAtividadeForm}>
-                    <X className="w-5 h-5" />
-                  </Button>
-                </div>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    saveAtividade()
-                  }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label htmlFor="titulo" className="block text-sm font-medium text-gray-700">
-                      Título
-                    </label>
-                    <input
-                      type="text"
-                      id="titulo"
-                      value={atividadeForm.titulo}
-                      onChange={(e) => setAtividadeForm({ ...atividadeForm, titulo: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="descricao" className="block text-sm font-medium text-gray-700">
-                      Descrição
-                    </label>
-                    <textarea
-                      id="descricao"
-                      value={atividadeForm.descricao}
-                      onChange={(e) => setAtividadeForm({ ...atividadeForm, descricao: e.target.value })}
-                      rows={3}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="colaborador" className="block text-sm font-medium text-gray-700">
-                      Colaborador
-                    </label>
-                    <select
-                      id="colaborador"
-                      value={atividadeForm.colaboradorId}
-                      onChange={(e) => setAtividadeForm({ ...atividadeForm, colaboradorId: e.target.value })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                      required
-                    >
-                      <option value="">Selecione um colaborador</option>
-                      {colaboradores.map((colaborador) => (
-                        <option key={colaborador._id} value={colaborador._id}>
-                          {colaborador.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                        Status
-                      </label>
-                      <select
-                        id="status"
-                        value={atividadeForm.status}
-                        onChange={(e) =>
-                          setAtividadeForm({
-                            ...atividadeForm,
-                            status: e.target.value as "pendente" | "em-andamento" | "concluida" | "cancelada",
-                          })
-                        }
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                      >
-                        <option value="pendente">Pendente</option>
-                        <option value="em-andamento">Em Andamento</option>
-                        <option value="concluida">Concluída</option>
-                        <option value="cancelada">Cancelada</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="prioridade" className="block text-sm font-medium text-gray-700">
-                        Prioridade
-                      </label>
-                      <select
-                        id="prioridade"
-                        value={atividadeForm.prioridade}
-                        onChange={(e) =>
-                          setAtividadeForm({
-                            ...atividadeForm,
-                            prioridade: e.target.value as "baixa" | "media" | "alta",
-                          })
-                        }
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                      >
-                        <option value="baixa">Baixa</option>
-                        <option value="media">Média</option>
-                        <option value="alta">Alta</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="duracao" className="block text-sm font-medium text-gray-700">
-                        Duração (horas)
-                      </label>
-                      <input
-                        type="number"
-                        id="duracao"
-                        value={atividadeForm.duracao}
-                        onChange={(e) => setAtividadeForm({ ...atividadeForm, duracao: parseInt(e.target.value) || 0 })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                        min="0"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="prazo" className="block text-sm font-medium text-gray-700">
-                        Prazo
-                      </label>
-                      <input
-                        type="date"
-                        id="prazo"
-                        value={atividadeForm.prazo}
-                        onChange={(e) => setAtividadeForm({ ...atividadeForm, prazo: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={closeAtividadeForm}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                      Salvar
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
+{/* Modal para Adicionar/Editar Atividade */}
+{showAtividadeForm && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <Card className="w-full max-w-xs sm:max-w-sm md:max-w-lg">
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-base sm:text-xl font-bold">
+            {editingAtividade ? "Editar Atividade" : "Adicionar Nova Atividade"}
+          </h2>
+          <Button variant="ghost" size="icon" onClick={closeAtividadeForm}>
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveAtividade();
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label htmlFor="titulo" className="block text-xs sm:text-sm font-medium text-gray-700">
+              Título
+            </label>
+            <input
+              type="text"
+              id="titulo"
+              value={atividadeForm.titulo}
+              onChange={(e) => setAtividadeForm({ ...atividadeForm, titulo: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-xs sm:text-sm"
+              required
+            />
           </div>
-        )}
+          <div>
+            <label htmlFor="descricao" className="block text-xs sm:text-sm font-medium text-gray-700">
+              Descrição
+            </label>
+            <textarea
+              id="descricao"
+              value={atividadeForm.descricao}
+              onChange={(e) => setAtividadeForm({ ...atividadeForm, descricao: e.target.value })}
+              rows={3}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-xs sm:text-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="colaborador" className="block text-xs sm:text-sm font-medium text-gray-700">
+              Colaborador
+            </label>
+            <select
+              id="colaborador"
+              value={atividadeForm.colaboradorId}
+              onChange={(e) => setAtividadeForm({ ...atividadeForm, colaboradorId: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-xs sm:text-sm"
+              required
+            >
+              <option value="">Selecione um colaborador</option>
+              {colaboradores.map((colaborador) => (
+                <option key={colaborador._id} value={colaborador._id}>
+                  {colaborador.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label htmlFor="status" className="block text-xs sm:text-sm font-medium text-gray-700">
+                Status
+              </label>
+              <select
+                id="status"
+                value={atividadeForm.status}
+                onChange={(e) =>
+                  setAtividadeForm({
+                    ...atividadeForm,
+                    status: e.target.value as "pendente" | "em-andamento" | "concluida" | "cancelada",
+                  })
+                }
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-xs sm:text-sm"
+              >
+                <option value="pendente">Pendente</option>
+                <option value="em-andamento">Em Andamento</option>
+                <option value="concluida">Concluída</option>
+                <option value="cancelada">Cancelada</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="prioridade" className="block text-xs sm:text-sm font-medium text-gray-700">
+                Prioridade
+              </label>
+              <select
+                id="prioridade"
+                value={atividadeForm.prioridade}
+                onChange={(e) =>
+                  setAtividadeForm({
+                    ...atividadeForm,
+                    prioridade: e.target.value as "baixa" | "media" | "alta",
+                  })
+                }
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-xs sm:text-sm"
+              >
+                <option value="baixa">Baixa</option>
+                <option value="media">Média</option>
+                <option value="alta">Alta</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label htmlFor="duracao" className="block text-xs sm:text-sm font-medium text-gray-700">
+                Duração (horas)
+              </label>
+              <input
+                type="number"
+                id="duracao"
+                value={atividadeForm.duracao}
+                onChange={(e) => setAtividadeForm({ ...atividadeForm, duracao: parseInt(e.target.value) || 0 })}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-xs sm:text-sm"
+                min="0"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="prazo" className="block text-xs sm:text-sm font-medium text-gray-700">
+                Prazo
+              </label>
+              <input
+                type="date"
+                id="prazo"
+                value={atividadeForm.prazo}
+                onChange={(e) => setAtividadeForm({ ...atividadeForm, prazo: e.target.value })}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-xs sm:text-sm"
+                required
+              />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button type="button" variant="outline" onClick={closeAtividadeForm} className="text-xs sm:text-sm">
+              Cancelar
+            </Button>
+            <Button type="submit" className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm">
+              Salvar
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  </div>
+)}
+
+        
       </main>
     </div>
   )
