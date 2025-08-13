@@ -142,7 +142,7 @@ const fetchColaboradores = async () => {
   setError(null)
   try {
     const response = await fetch(`${API_BASE_URL}/colaboradores`, {
-      headers: { "x-projeto": "projetoB" } // define projetoB
+      headers: { "x-projeto": "projetoA" } // define projetoA
     })
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
     const data = await response.json()
@@ -160,7 +160,7 @@ const fetchAtividades = async () => {
   setError(null)
   try {
     const response = await fetch(`${API_BASE_URL}/atividades`, {
-      headers: { "x-projeto": "projetoB" } // define projetoB
+      headers: { "x-projeto": "projetoA" } // define projetoA
     })
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
     const data = await response.json()
