@@ -560,6 +560,7 @@ const fetchAtividades = async () => {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+             'x-projeto': 'projetoB'
           },
           body: JSON.stringify(atividadeForm),
         });
@@ -569,6 +570,7 @@ const fetchAtividades = async () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+             'x-projeto': 'projetoB'
           },
           body: JSON.stringify(atividadeForm),
         });
@@ -602,6 +604,10 @@ const fetchAtividades = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/atividades/${id}`, {
           method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+             'x-projeto': 'projetoB'
+          },
         });
 
         if (!response.ok) {
