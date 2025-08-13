@@ -548,96 +548,148 @@ const fetchAtividades = async () => {
     })
   }
 
-  // --- Modified Methods for Activities to Interact with API ---
-  const saveAtividade = async () => {
+
+
+// --- Modified Methods for Activities to Interact with API ---
+const saveAtividade = async () => {
+  setLoading(true);
+  setError(null);
+  
+  try {
+    // Validação básica dos campos obrigatórios
+    if (!atividadeForm.titulo.trim()) {
+      throw new Error('Título é obrigatório');
+    }
+    if (!atividadeForm.descricao.trim()) {
+      throw new Error('Descrição é obrigatória');
+    }
+    if (!atividadeForm.colaboradorId) {
+      throw new Error('Colaborador é obrigatório');
+    }
+
+    // Preparar dados para envio
+    const dataToSend = {
+      ...atividadeForm,
+      titulo: atividadeForm.titulo.trim(),
+      descricao: atividadeForm.descricao.trim(),
+      duracao: parseInt(atividadeForm.duracao) || 1, // Garantir que é número
+      prazo: atividadeForm.prazo || new Date().toISOString().split('T')[0] // Data padrão se não fornecida
+    };
+
+    let response;
+    if (editingAtividade) {
+      // Update existing activity
+      response = await fetch(`${API_BASE_URL}/atividades/${editingAtividade._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-projeto': 'projetoB'
+        },
+        body: JSON.stringify(dataToSend),
+      });
+    } else {
+      // Create new activity
+      response = await fetch(`${API_BASE_URL}/atividades`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-projeto': 'projetoB'
+        },
+        body: JSON.stringify(dataToSend),
+      });
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      const errorMessage = errorData?.message || `HTTP error! status: ${response.status}`;
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log('Atividade salva com sucesso:', result);
+
+    // Re-fetch data
+    await fetchAtividades();
+    closeAtividadeForm();
+    
+    // Opcional: Mostrar mensagem de sucesso
+    alert(editingAtividade ? 'Atividade atualizada com sucesso!' : 'Atividade criada com sucesso!');
+    
+  } catch (e) {
+    const errorMessage = e.message || 'Erro desconhecido ao salvar atividade';
+    setError(`Falha ao salvar atividade: ${errorMessage}`);
+    console.error("Falha ao salvar atividade:", e);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const editAtividade = (atividade) => {
+  setEditingAtividade(atividade);
+  setAtividadeForm({
+    titulo: atividade.titulo || "",
+    descricao: atividade.descricao || "",
+    colaboradorId: atividade.colaboradorId || "",
+    status: atividade.status || "pendente",
+    prioridade: atividade.prioridade || "media",
+    duracao: atividade.duracao || 1,
+    prazo: atividade.prazo ? atividade.prazo.split('T')[0] : "", // Formatear data para input
+  });
+  setShowAtividadeForm(true);
+};
+
+const deleteAtividade = async (id) => {
+  if (confirm("Tem certeza que deseja excluir esta atividade?")) {
     setLoading(true);
     setError(null);
+    
     try {
-      let response;
-      if (editingAtividade) {
-        // Update existing activity
-        response = await fetch(`${API_BASE_URL}/atividades/${editingAtividade._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-             'x-projeto': 'projetoB'
-          },
-          body: JSON.stringify(atividadeForm),
-        });
-      } else {
-        // Create new activity
-        response = await fetch(`${API_BASE_URL}/atividades`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-             'x-projeto': 'projetoB'
-          },
-          body: JSON.stringify(atividadeForm),
-        });
-      }
+      const response = await fetch(`${API_BASE_URL}/atividades/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-projeto': 'projetoB'
+        },
+      });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.message || `HTTP error! status: ${response.status}`;
+        throw new Error(errorMessage);
       }
 
+      console.log('Atividade excluída com sucesso');
+      
       // Re-fetch data
       await fetchAtividades();
-      closeAtividadeForm();
-    } catch (e: any) {
-      setError(`Failed to save activity: ${e.message}`);
-      console.error("Failed to save activity:", e);
+      
+      // Opcional: Mostrar mensagem de sucesso
+      alert('Atividade excluída com sucesso!');
+      
+    } catch (e) {
+      const errorMessage = e.message || 'Erro desconhecido ao excluir atividade';
+      setError(`Falha ao excluir atividade: ${errorMessage}`);
+      console.error("Falha ao excluir atividade:", e);
     } finally {
       setLoading(false);
     }
   }
+};
 
-  const editAtividade = (atividade: Atividade) => {
-    setEditingAtividade(atividade)
-    setAtividadeForm({ ...atividade })
-    setShowAtividadeForm(true)
-  }
-
-  const deleteAtividade = async (id: string) => {
-    if (confirm("Tem certeza que deseja excluir esta atividade?")) {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`${API_BASE_URL}/atividades/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-             'x-projeto': 'projetoB'
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        // Re-fetch data
-        await fetchAtividades();
-      } catch (e: any) {
-        setError(`Failed to delete activity: ${e.message}`);
-        console.error("Failed to delete activity:", e);
-      } finally {
-        setLoading(false);
-      }
-    }
-  }
-
-  const closeAtividadeForm = () => {
-    setShowAtividadeForm(false)
-    setEditingAtividade(null)
-    setAtividadeForm({
-      titulo: "",
-      descricao: "",
-      colaboradorId: "",
-      status: "pendente",
-      prioridade: "media",
-      duracao: 1,
-      prazo: "",
-    })
-  }
+const closeAtividadeForm = () => {
+  setShowAtividadeForm(false);
+  setEditingAtividade(null);
+  setAtividadeForm({
+    titulo: "",
+    descricao: "",
+    colaboradorId: "",
+    status: "pendente",
+    prioridade: "media",
+    duracao: 1,
+    prazo: "",
+  });
+  setError(null); // Limpar erros ao fechar o formulário
+};
 
   // Métodos utilitários (These largely remain the same, but now `getColaboradorNome`
   // will work with the fetched `colaboradores` array and IDs from activities)
