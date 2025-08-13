@@ -514,6 +514,10 @@ const fetchAtividades = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/colaboradores/${id}`, {
           method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+             'x-projeto': 'projetoB'
+          },
         });
 
         if (!response.ok) {
