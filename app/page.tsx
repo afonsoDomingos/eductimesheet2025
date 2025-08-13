@@ -142,7 +142,7 @@ const fetchColaboradores = async () => {
   setError(null)
   try {
     const response = await fetch(`${API_BASE_URL}/colaboradores`, {
-      headers: { "x-projeto": "projetoA" } // define projetoA
+      headers: { "x-projeto": "projetoB" } // define projetoB
     })
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
     const data = await response.json()
@@ -160,7 +160,7 @@ const fetchAtividades = async () => {
   setError(null)
   try {
     const response = await fetch(`${API_BASE_URL}/atividades`, {
-      headers: { "x-projeto": "projetoA" } // define projetoA
+      headers: { "x-projeto": "projetoB" } // define projetoA
     })
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
     const data = await response.json()
@@ -470,6 +470,7 @@ const fetchAtividades = async () => {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+             'x-projeto': 'projetoB'
           },
           body: JSON.stringify(colaboradorForm),
         });
