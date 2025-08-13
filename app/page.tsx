@@ -43,7 +43,7 @@ interface Atividade {
   prazo: string
 }
 
-const API_BASE_URL = "https://apieducplanact.onrender.com/api"
+const API_BASE_URL = "https://apiplanact.onrender.com/api"
 
 export default function PlataformaAtividades() {
   // Estado da aplicação
@@ -137,41 +137,45 @@ export default function PlataformaAtividades() {
   }, [atividades, totalAtividades])
 
   // --- Data Fetching Functions ---
-  const fetchColaboradores = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API_BASE_URL}/colaboradores`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setColaboradores(data);
-    } catch (e: any) {
-      setError(`Failed to fetch collaborators: ${e.message}`);
-      console.error("Failed to fetch collaborators:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchColaboradores = async () => {
+  setLoading(true)
+  setError(null)
+  try {
+    const response = await fetch(`${API_BASE_URL}/colaboradores`, {
+      headers: { "x-projeto": "projetoB" } // define projetoB
+    })
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+    const data = await response.json()
+    setColaboradores(data)
+  } catch (e: any) {
+    setError(`Falha ao buscar colaboradores: ${e.message}`)
+    console.error(e)
+  } finally {
+    setLoading(false)
+  }
+}
 
-  const fetchAtividades = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API_BASE_URL}/atividades`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setAtividades(data);
-    } catch (e: any) {
-      setError(`Failed to fetch activities: ${e.message}`);
-      console.error("Failed to fetch activities:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchAtividades = async () => {
+  setLoading(true)
+  setError(null)
+  try {
+    const response = await fetch(`${API_BASE_URL}/atividades`, {
+      headers: { "x-projeto": "projetoB" } // define projetoB
+    })
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+    const data = await response.json()
+    setAtividades(data)
+  } catch (e: any) {
+    setError(`Falha ao buscar atividades: ${e.message}`)
+    console.error(e)
+  } finally {
+    setLoading(false)
+  }
+}
+
+
+
+ 
 
   // --- useEffect to fetch data on component mount ---
   useEffect(() => {
@@ -710,7 +714,7 @@ export default function PlataformaAtividades() {
           <div className="flex flex-col sm:flex-row justify-between items-center h-auto sm:h-16 gap-2 sm:gap-0">
             <div className="flex items-center mb-2 sm:mb-0">
               <Activity className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-xl font-semibold text-gray-900">TIMESHEET EDUC</h1>
+              <h1 className="text-xl font-semibold text-gray-900">TIMESHEET AROMA NATURAL</h1>
             </div>
             <nav className="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-8 items-center justify-center">
               <button
