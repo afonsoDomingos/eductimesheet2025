@@ -714,7 +714,7 @@ const fetchAtividades = async () => {
           <div className="flex flex-col sm:flex-row justify-between items-center h-auto sm:h-16 gap-2 sm:gap-0">
             <div className="flex items-center mb-2 sm:mb-0">
               <Activity className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-xl font-semibold text-gray-900">TIMESHEET AROMA NATURAL</h1>
+              <h1 className="text-xl font-semibold text-gray-900">TIMESHEET EDUC</h1>
             </div>
             <nav className="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-8 items-center justify-center">
               <button
